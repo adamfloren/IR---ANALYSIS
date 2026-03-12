@@ -1,0 +1,856 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>IR Analysis | International Relations Education</title>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Heebo:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- React 18 -->
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+
+  <!-- Babel Standalone (in-browser JSX) -->
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <style>
+    :root {
+      --bg: #F8F7F4;
+      --surface: #FFFFFF;
+      --border: #E8E5DF;
+      --text: #1A1A2E;
+      --text-muted: #6B7280;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', system-ui, sans-serif;
+      font-size: 16px;
+      line-height: 1.75;
+      margin: 0;
+    }
+
+    html[dir="rtl"] body {
+      font-family: 'Heebo', 'Arial Hebrew', sans-serif;
+    }
+
+    /* Progress bar */
+    #progress-bar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      height: 4px;
+      background: linear-gradient(to right, #3B82F6, #8B5CF6);
+      transition: width 80ms linear;
+      z-index: 1000;
+    }
+
+    /* Accordion */
+    .accordion-content {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 300ms ease-in-out;
+    }
+    .accordion-content.open {
+      max-height: 5000px;
+    }
+    .chevron {
+      transition: transform 220ms ease;
+      display: inline-block;
+    }
+    .chevron.open {
+      transform: rotate(180deg);
+    }
+
+    /* Card hover */
+    .hoverable {
+      transition: transform 150ms ease, box-shadow 150ms ease;
+    }
+    .hoverable:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+    }
+
+    /* Citation tooltip */
+    .cite-wrap {
+      position: relative;
+      display: inline;
+    }
+    .cite-tip {
+      display: none;
+      position: absolute;
+      bottom: calc(100% + 4px);
+      left: 50%;
+      transform: translateX(-50%);
+      background: #1A1A2E;
+      color: #fff;
+      font-size: 11px;
+      padding: 4px 8px;
+      border-radius: 5px;
+      white-space: nowrap;
+      z-index: 200;
+      pointer-events: none;
+    }
+    .cite-wrap:hover .cite-tip {
+      display: block;
+    }
+
+    /* Skeleton shimmer */
+    @keyframes shimmer {
+      0%   { background-position: -200% 0; }
+      100% { background-position:  200% 0; }
+    }
+    .skeleton {
+      background: linear-gradient(90deg, #eeede9 25%, #e4e2dd 50%, #eeede9 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.4s infinite;
+      border-radius: 6px;
+    }
+
+    /* Issue tab */
+    .issue-tab {
+      transition: all 150ms ease;
+      cursor: pointer;
+    }
+    .issue-tab.active {
+      background: white;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+    }
+  </style>
+</head>
+<body>
+  <div id="progress-bar" style="width:0%"></div>
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect } = React;
+
+    // ================================================================
+    // UI LABELS  (English + Hebrew)
+    // ================================================================
+    const L = {
+      en: {
+        appName: "IR Analysis",
+        appSub: "International Relations Education",
+        landscape: "The Current Landscape",
+        landscapeSub: "Fact-based overview with cited sources",
+        analysis: "Multidimensional Analysis",
+        analysisSub: "IR theory — Individual, State & Systemic levels",
+        historical: "Historical Mirroring",
+        historicalSub: "Comparative analysis against a historical case",
+        individual: "Individual Level",
+        state: "State Level",
+        systemic: "Systemic Level",
+        keyFacts: "Key Facts",
+        timeline: "Timeline",
+        similarities: "Similarities",
+        differences: "Differences",
+        keyTakeaway: "Key Takeaway",
+        parallel: "Historical Parallel",
+        issueLabel: "Issue",
+        lastUpdated: "Last updated",
+        liveNews: "Today in IR",
+        liveNewsSub: "Live headlines — BBC World & Reuters",
+        refresh: "Refresh",
+        readMore: "Read →",
+        loading: "Loading headlines…",
+        noNews: "Could not load headlines.",
+        retry: "Retry",
+        hostTitle: "Deploy online (GitHub Pages)",
+        hostBody: "Upload this file to a GitHub repository, enable Pages in Settings → you get a free public URL instantly.",
+        footer: "IR Analysis · ADHD-friendly learning",
+      },
+      he: {
+        appName: "ניתוח יחב\"ל",
+        appSub: "חינוך ביחסים בינלאומיים",
+        landscape: "המצב הנוכחי",
+        landscapeSub: "סקירה עובדתית עם מקורות מצוטטים",
+        analysis: "ניתוח רב-ממדי",
+        analysisSub: "תיאוריית יחב\"ל — רמת הפרט, המדינה והמערכת",
+        historical: "מראה היסטורי",
+        historicalSub: "ניתוח השוואתי מול אירוע היסטורי",
+        individual: "רמת הפרט",
+        state: "רמת המדינה",
+        systemic: "רמת המערכת",
+        keyFacts: "עובדות מפתח",
+        timeline: "ציר זמן",
+        similarities: "דמיון",
+        differences: "שוני",
+        keyTakeaway: "מסקנה מרכזית",
+        parallel: "מקבילה היסטורית",
+        issueLabel: "גיליון",
+        lastUpdated: "עודכן לאחרונה",
+        liveNews: "עדכוני יחב\"ל של היום",
+        liveNewsSub: "כותרות חיות — BBC World ו-Reuters",
+        refresh: "רענן",
+        readMore: "← קרא",
+        loading: "טוען כותרות…",
+        noNews: "לא ניתן לטעון כותרות.",
+        retry: "נסה שוב",
+        hostTitle: "פרסום ב-GitHub Pages",
+        hostBody: "העלה קובץ זה ל-GitHub, הפעל Pages בהגדרות — וקבל כתובת URL ציבורית חינמית.",
+        footer: "ניתוח יחב\"ל · למידה ידידותית ל-ADHD",
+      },
+    };
+
+    // ================================================================
+    // CONTENT DATA
+    // ================================================================
+    const ISSUES = [
+      // ── ISSUE 01 ─────────────────────────────────────────────────
+      {
+        id: "us-china-tech",
+        meta: {
+          number: "01",
+          title:    { en: "U.S.-China Technological Competition",       he: "התחרות הטכנולוגית ארה\"ב–סין" },
+          subtitle: { en: "Semiconductors, AI, and the New Tech Cold War", he: "מוליכים למחצה, בינה מלאכותית ומלחמה קרה טכנולוגית" },
+          tags:     { en: ["Geopolitics","Technology","Great Power Competition"], he: ["גאופוליטיקה","טכנולוגיה","תחרות בין מעצמות"] },
+          lastUpdated: "March 2025",
+        },
+        landscape: {
+          summary: {
+            en: "The United States and China are engaged in a structural competition for dominance in foundational technologies — semiconductors, artificial intelligence, and quantum computing. This rivalry has moved beyond trade policy into strategic denial: the U.S. is attempting to prevent China from acquiring the critical inputs required to close the technology gap.",
+            he: "ארצות הברית וסין מצויות בתחרות מבנית על שליטה בטכנולוגיות יסוד — מוליכים למחצה, בינה מלאכותית ומחשוב קוונטי. יריבות זו חרגה מעבר למדיניות סחר לתחום של שלילה אסטרטגית.",
+          },
+          keyFacts: [
+            {
+              text: { en: "The CHIPS and Science Act (2022) allocated $52.7 billion to domestic semiconductor manufacturing and R&D — the largest U.S. industrial-policy investment in this sector in history.", he: "חוק ה-CHIPS Act (2022) הקצה 52.7 מיליארד דולר לייצור מוליכים למחצה מקומי — ההשקעה הגדולה ביותר במדיניות תעשייתית אמריקאית בתחום זה בהיסטוריה." },
+              citations: [{ id:"crs1", label:"1", title:"CRS – CHIPS Act of 2022", href:"https://crsreports.congress.gov/product/pdf/R/R47523" }],
+            },
+            {
+              text: { en: "The Biden administration's October 2022 export controls banned the sale of advanced semiconductors (NVIDIA A100/H100 GPUs) and chip-making equipment (ASML EUV lithography machines) to China without a license.", he: "בקרות הייצוא של אוקטובר 2022 אסרו מכירת מעבדים מתקדמים (NVIDIA A100/H100) וציוד לייצור שבבים (מכונות EUV של ASML) לסין ללא רישיון." },
+              citations: [{ id:"bis2", label:"2", title:"BIS Export Controls, Oct 7 2022", href:"https://www.bis.doc.gov/index.php/documents/about-bis/newsroom/press-releases/3158-2022-10-07-bis-press-release-advanced-computing-and-semiconductor-rule-final/file" }],
+            },
+            {
+              text: { en: "China's semiconductor self-sufficiency stands at approximately 16% of domestic consumption (2023), despite the 'Made in China 2025' target of 70% by 2025.", he: "הסתמכות עצמית של סין במוליכים למחצה עומדת על כ-16% מהצריכה המקומית (2023), חרף יעד 70% עד 2025 תחת 'Made in China 2025'." },
+              citations: [{ id:"csis3", label:"3", title:"CSIS – Waiving the Rules, 2023", href:"https://www.csis.org/analysis/waiving-rules-chips-act-guardrails" }],
+            },
+            {
+              text: { en: "Huawei's Mate 60 Pro (September 2023) contained a domestically produced 7nm chip (Kirin 9000s by SMIC), signaling a partial breakthrough despite U.S. export controls.", he: "Huawei Mate 60 Pro (ספטמבר 2023) כלל שבב מקומי בן 7 ננומטר (Kirin 9000s של SMIC) — פריצת דרך חלקית למרות בקרות הייצוא האמריקאיות." },
+              citations: [{ id:"bloom4", label:"4", title:"Bloomberg Technology – Huawei Chip, Sep 2023", href:"https://www.bloomberg.com/news/articles/2023-09-04/huawei-s-surprise-phone-shows-china-s-chip-progress-amid-us-ban" }],
+            },
+            {
+              text: { en: "China accounts for 37% of global AI research publications but lags significantly in compute infrastructure and frontier model development compared to the United States.", he: "סין מייצרת 37% מפרסומי המחקר העולמיים בבינה מלאכותית, אך נופלת משמעותית בתשתיות מחשוב ופיתוח מודלים חזיתיים." },
+              citations: [{ id:"cset5", label:"5", title:"CSET Georgetown – AI Talent, 2023", href:"https://cset.georgetown.edu/publication/ai-talent-in-the-world/" }],
+            },
+          ],
+          timeline: [
+            { year:"2015",     text:{ en:"China announces 'Made in China 2025' strategic industrial plan",       he:"סין מכריזה על תוכנית 'Made in China 2025'" } },
+            { year:"2018",     text:{ en:"U.S. places ZTE on Entity List — first major tech restriction on a Chinese firm", he:"ארה\"ב מוסיפה את ZTE לרשימת הישויות — הגבלה טכנולוגית ראשונה" } },
+            { year:"2019",     text:{ en:"Huawei added to Entity List; Google severs Android license",           he:"Huawei מתווספת לרשימה; גוגל מבטלת רישיון Android" } },
+            { year:"2020",     text:{ en:"TSMC halts Huawei chip supply under U.S. pressure",                   he:"TSMC מפסיקה אספקת שבבים ל-Huawei תחת לחץ אמריקאי" } },
+            { year:"Aug 2022", text:{ en:"CHIPS Act signed into law",                                           he:"חוק ה-CHIPS נחתם לחוק" } },
+            { year:"Oct 2022", text:{ en:"BIS advanced chip export controls imposed",                           he:"בקרות ייצוא BIS לשבבים מתקדמים מוטלות" } },
+            { year:"Sep 2023", text:{ en:"Huawei Mate 60 Pro released with domestic 7nm chip (SMIC)",           he:"Huawei Mate 60 Pro עם שבב 7nm מקומי (SMIC) משוחרר" } },
+            { year:"2024",     text:{ en:"ASML prohibited from shipping DUV machines to China",                 he:"ASML נאסרת מלשלוח מכונות DUV לסין" } },
+          ],
+        },
+        analysis: {
+          individual: {
+            actor: { en:"Xi Jinping & Jake Sullivan", he:"שי ג'ינפינג וג'ייק סאליבן" },
+            text: {
+              en: "Xi Jinping has personally elevated semiconductor self-sufficiency to a matter of national survival, framing the issue in terms of 'chokepoint' vulnerabilities — a lens sharpened by the ZTE and Huawei shocks of 2018–2019. His response combines state-directed investment (National Integrated Circuit Fund) with nationalist mobilization. Jake Sullivan articulated the doctrine of maintaining 'as large a lead as possible' in critical technologies — a departure from prior U.S. policy of relative advantage — reflecting a hawkish coalition across Commerce, DOD, and the NSC.",
+              he: "שי ג'ינפינג העלה את הסתמכות עצמית בשבבים לרמת הישרדות לאומית, תוך מסגור הנושא כ'נקודות חניק'. ג'ייק סאליבן גיבש את הדוקטרינה של 'גינה קטנה, גדר גבוהה' — סטייה ממדיניות היתרון היחסי הקודמת.",
+            },
+            citations: [
+              { id:"cfr6", label:"6", title:"CFR – China's Bet on Homegrown Technology, 2023", href:"https://www.cfr.org/backgrounder/chinas-bet-homegrown-technology" },
+              { id:"sul7", label:"7", title:"Sullivan – SCSP Speech, Sep 2022", href:"https://www.whitehouse.gov/briefing-room/speeches-remarks/2022/09/16/remarks-by-national-security-advisor-jake-sullivan-at-the-special-competitive-studies-project-global-emerging-technologies-summit/" },
+            ],
+          },
+          state: {
+            actor: { en:"United States & China (State Level)", he:"ארצות הברית וסין — רמת המדינה" },
+            text: {
+              en: "United States: The CHIPS Act represents rare bipartisan consensus on industrial policy — historically anathema to both parties. Drivers include rust-belt revival (electoral), defense dependency on TSMC (security), and lobbying by Intel and Micron. China: The CCP response is constrained by the limits of state-directed R&D versus market-driven innovation, a real-estate-driven economic slowdown limiting Big Fund injections, and brain drain of Chinese-American engineers post-export controls.",
+              he: "ארצות הברית: חוק ה-CHIPS מייצג קונצנזוס דו-מפלגתי נדיר על מדיניות תעשייתית. סין: תגובת המפלגה מוגבלת על ידי מגבלות מחקר בהנחיית המדינה, האטה כלכלית ונדידת מוחות.",
+            },
+            citations: [
+              { id:"brook8", label:"8", title:"Brookings – Industrial Policy and CHIPS Act, 2023", href:"https://www.brookings.edu/articles/industrial-policy-takes-center-stage-the-chips-and-science-act/" },
+              { id:"csis9", label:"9", title:"CSIS – China's Semiconductor Industry, 2023", href:"https://www.csis.org/analysis/chinas-semiconductor-industry" },
+            ],
+          },
+          systemic: {
+            actor: { en:"International System", he:"המערכת הבינלאומית" },
+            text: {
+              en: "The export control regime represents a structural decoupling of the global semiconductor supply chain — a chain built over 40 years on comparative advantage. The U.S. is weaponizing interdependence (Farrell & Newman, 2019) to maintain hegemonic control over a dual-use enabling technology. This mirrors structural realism: a rising peer competitor forces the hegemon into preventive action. The result is a security dilemma in the economic domain — China cannot accept permanent technological subordination; the U.S. cannot accept losing its lead.",
+              he: "משטר בקרות הייצוא מייצג פירוק מבני של שרשרת האספקה העולמית לשבבים. ארה\"ב מנשקת תלות הדדית (פארל ונוימן, 2019) לשמירת שליטה הגמונית. התוצאה היא דילמת ביטחון בתחום הכלכלי.",
+            },
+            citations: [
+              { id:"fw10", label:"10", title:"Farrell & Newman – Weaponized Interdependence, IS 2019", href:"https://direct.mit.edu/isec/article/44/1/42/12237/Weaponized-Interdependence-How-Global-Economic" },
+              { id:"cfr11", label:"11", title:"CFR – Technology and National Security, 2024", href:"https://www.cfr.org/report/technology-and-national-security-sustaining-americas-edge" },
+            ],
+          },
+        },
+        historical: {
+          parallel: { en:"U.S.-Soviet Space Race (1957–1969)", he:"מרוץ החלל ארה\"ב–ברית המועצות (1957–1969)" },
+          similarities: {
+            en: [
+              "Both rivalries triggered by a 'Sputnik moment': 1957 satellite launch → 2023 Huawei 7nm chip",
+              "Both prompted massive state-directed investment (NASA: 4% of federal budget in 1966; CHIPS Act: $52.7B)",
+              "Both framed as existential: space = nuclear delivery; AI/chips = future military & economic supremacy",
+              "Both involved technology-denial regimes: COCOM restrictions vs. BIS Entity List",
+              "Ideological dimension mobilized public and congressional support in both cases",
+            ],
+            he: [
+              "שתי היריבויות הוצתו על ידי 'רגע ספוטניק': שיגור 1957 ← שבב 7nm של Huawei 2023",
+              "שתיהן גרמו להשקעה מסיבית בהנחיית המדינה",
+              "שתיהן הוצגו כאקזיסטנציאליות",
+              "שתיהן כללו משטרי שלילת טכנולוגיה",
+              "הממד האידיאולוגי גייס תמיכה ציבורית ופרלמנטרית",
+            ],
+          },
+          differences: {
+            en: [
+              "Cold War tech competition was already bifurcated from day one; U.S.-China competition involves unwinding 40 years of integrated supply chains",
+              "The Soviet Union had minimal leverage over the U.S. economy; China is the U.S.'s 2nd-largest trading partner (~$575B in goods, 2023)",
+              "Space Race had a clear win condition (moon landing); AI/chip race has no singular finish line",
+              "Allied coordination was simpler in Cold War (NATO bloc); today TSMC, ASML, and Samsung each have independent economic interests",
+            ],
+            he: [
+              "תחרות המלחמה הקרה הייתה מפוצלת מלכתחילה; תחרות ארה\"ב–סין כרוכה בפירוק שרשראות אספקה של 40 שנה",
+              "לברית המועצות הייתה השפעה מינימלית על הכלכלה האמריקאית; סין היא שותפת הסחר השנייה בגודלה",
+              "למרוץ החלל הייתה מטרה ברורה; למרוץ AI/שבבים אין קו גמר יחיד",
+              "תיאום ברית היה פשוט יותר; כיום ל-TSMC, ASML ו-Samsung יש אינטרסים עצמאיים",
+            ],
+          },
+          keyTakeaway: {
+            en: "The Space Race analogy holds at the policy-response level, not the competition structure. Like post-Sputnik, the short-term shock may accelerate long-term investment — if implementation avoids subsidy capture and political fragmentation.",
+            he: "האנלוגיה למרוץ החלל תקפה ברמת תגובת המדיניות, לא במבנה התחרות. כמו לאחר ספוטניק, הזעזוע עשוי לזרז השקעה לטווח ארוך — אם יימנע כשל מדיניות.",
+          },
+          citations: [
+            { id:"brook12", label:"12", title:"Brookings – Lessons from Sputnik, 2022", href:"https://www.brookings.edu/articles/what-sputnik-can-teach-us-about-the-u-s-china-tech-rivalry/" },
+            { id:"mcd13",   label:"13", title:"McDougall – The Heavens and the Earth (1985)", href:"https://www.worldcat.org/title/the-heavens-and-the-earth-a-political-history-of-the-space-age/oclc/11108528" },
+          ],
+        },
+      },
+
+      // ── ISSUE 02 ─────────────────────────────────────────────────
+      {
+        id: "russia-ukraine",
+        meta: {
+          number: "02",
+          title:    { en: "Russia-Ukraine War & the European Security Order",          he: "מלחמת רוסיה–אוקראינה וסדר הביטחון האירופי" },
+          subtitle: { en: "Sovereignty, NATO Expansion, and the Erosion of the Liberal Order", he: "ריבונות, הרחבת נאט\"ו ושחיקת הסדר הליברלי" },
+          tags:     { en: ["European Security","NATO","Russia","International Law"],   he: ["ביטחון אירופי","נאט\"ו","רוסיה","משפט בינלאומי"] },
+          lastUpdated: "March 2025",
+        },
+        landscape: {
+          summary: {
+            en: "Russia's full-scale invasion of Ukraine on February 24, 2022 marked the most significant conventional military conflict in Europe since World War II. The war has fundamentally challenged the post-Cold War European security architecture, forcing a reassessment of NATO's role, European strategic autonomy, and the viability of the UN-based rules-based order.",
+            he: "הפלישה הרוסית בקנה מידה מלא לאוקראינה ב-24 בפברואר 2022 סימנה את העימות הצבאי הקונבנציונלי המשמעותי ביותר באירופה מאז מלחמת העולם השנייה.",
+          },
+          keyFacts: [
+            {
+              text: { en: "Ukraine has received over $250 billion in total international support (military, financial, humanitarian) from Western allies since February 2022 — the largest aid commitment since the Marshall Plan.", he: "אוקראינה קיבלה מעל 250 מיליארד דולר בתמיכה בינלאומית מאז פברואר 2022 — ההתחייבות הגדולה ביותר לסיוע מאז תוכנית מרשל." },
+              citations: [{ id:"kiel1", label:"1", title:"Kiel Institute – Ukraine Support Tracker, 2024", href:"https://www.ifw-kiel.de/topics/war-against-ukraine/ukraine-support-tracker/" }],
+            },
+            {
+              text: { en: "Finland and Sweden joined NATO in 2023 and 2024 respectively, marking a historic reversal of Nordic neutrality and expanding NATO's border with Russia by over 1,300 km.", he: "פינלנד ושוודיה הצטרפו לנאט\"ו ב-2023 וב-2024 — היפוך היסטורי של ניטרליות נורדית והרחבת גבול נאט\"ו עם רוסיה ביותר מ-1,300 ק\"מ." },
+              citations: [{ id:"nato2", label:"2", title:"NATO – Enlargement and Article 10", href:"https://www.nato.int/cps/en/natohq/topics_49212.htm" }],
+            },
+            {
+              text: { en: "Russia's defense spending reached approximately 6% of GDP in 2024 — the highest since the Soviet era — reshaping Russian industrial and fiscal priorities around a permanent war economy.", he: "הוצאות הביטחון של רוסיה הגיעו לכ-6% מהתמ\"ג ב-2024 — הגבוה ביותר מאז עידן הסובייטי." },
+              citations: [{ id:"sipri3", label:"3", title:"SIPRI – Military Expenditure Database, 2024", href:"https://www.sipri.org/databases/milex" }],
+            },
+            {
+              text: { en: "The ICC issued arrest warrants for Putin and Lvova-Belova in March 2023 for the unlawful deportation of Ukrainian children — the first ICC warrant against a sitting head of state of a UNSC permanent member.", he: "ה-ICC הוציא צווי מעצר נגד פוטין במרץ 2023 בגין גירוש לא חוקי של ילדים אוקראינים — הצו הראשון נגד ראש מדינה בכהונה של חבר קבוע במועצת הביטחון." },
+              citations: [{ id:"icc4", label:"4", title:"ICC – Arrest Warrants, March 2023", href:"https://www.icc-cpi.int/news/situation-ukraine-icc-judges-issue-arrest-warrants-against-vladimir-vladimirovich-putin-and" }],
+            },
+          ],
+          timeline: [
+            { year:"2014",     text:{ en:"Russia annexes Crimea; Donbas separatist war begins",              he:"רוסיה מספחת את קרים; מלחמת הפרדנים בדונבס מתחילה" } },
+            { year:"Feb 2022", text:{ en:"Full-scale invasion launched; Kyiv holds, Russian advance repelled", he:"פלישה בקנה מידה מלא; קייב מחזיקה, ההתקדמות הרוסית נדחית" } },
+            { year:"Sep 2022", text:{ en:"Ukraine's Kharkiv counteroffensive recaptures ~6,000 km²",          he:"הנגד האוקראיני בחרקוב מחזיר ~6,000 קמ\"ר" } },
+            { year:"2023",     text:{ en:"Finland joins NATO; Wagner mutiny (June); summer counteroffensive stalls", he:"פינלנד מצטרפת לנאט\"ו; מרד וגנר (יוני); הנגד הקיץ נעצר" } },
+            { year:"2024",     text:{ en:"Sweden joins NATO; North Korean troops reported in Russian service",  he:"שוודיה מצטרפת לנאט\"ו; חיילים צפון קוריאנים בשירות רוסיה" } },
+          ],
+        },
+        analysis: {
+          individual: {
+            actor: { en:"Putin & Zelensky", he:"פוטין וזלנסקי" },
+            text: {
+              en: "Putin's decision calculus reflected three compounding miscalculations: that Ukraine was an artificial state, that NATO would fracture under economic pressure, and that Kyiv would fall within days. His 'July 2021 essay' on Ukrainian identity telegraphed the ideological framework — a war of 'reunification,' not conquest. Zelensky's decision to remain in Kyiv on February 24 represents an extraordinary individual-level variable: it prevented elite defection and fundamentally sustained Western political will at the critical 72-hour juncture.",
+              he: "חישוב ההחלטה של פוטין שיקף שלושה שגיאות הערכה מצטברות: שאוקראינה היא מדינה מלאכותית, שנאט\"ו יתפרק ושקייב תיפול תוך ימים. החלטת זלנסקי להישאר בקייב ב-24 בפברואר מייצגת משתנה ברמת הפרט שמנע בריחת אליטות ושמר את הרצון הפוליטי המערבי.",
+            },
+            citations: [
+              { id:"hill5", label:"5", title:"Fiona Hill – Putin's World, Foreign Affairs 2022", href:"https://www.foreignaffairs.com/articles/ukraine/2022-02-24/putins-world" },
+            ],
+          },
+          state: {
+            actor: { en:"Russia & Western Coalition (State Level)", he:"רוסיה והקואליציה המערבית — רמת המדינה" },
+            text: {
+              en: "Russia's personalist autocracy with limited veto players enabled a rapid war decision while insulating Putin from elite pressure — but has created a war economy that will be structurally difficult to demobilize. For Western states, the war exposed deep tensions between energy dependence on Russia (EU), industrial base weakness (artillery shell production), and domestic political fragmentation (Hungary; U.S. Congressional dysfunction). The result is a coalition with significant aggregate capability but inconsistent political will.",
+              he: "האוטוקרטיה האישית של רוסיה אפשרה החלטת מלחמה מהירה אך יצרה כלכלת מלחמה שתהיה קשה לפרק. למערב, המלחמה חשפה תלות באנרגיה, חולשות בבסיס תעשייתי ופיצול פוליטי פנימי.",
+            },
+            citations: [
+              { id:"ecfr6", label:"6", title:"ECFR – European Strategic Autonomy Report, 2023", href:"https://ecfr.eu/publication/the-strategic-autonomy-debate-in-europe/" },
+            ],
+          },
+          systemic: {
+            actor: { en:"International System", he:"המערכת הבינלאומית" },
+            text: {
+              en: "The war is the most direct challenge to the post-Cold War 'liberal international order' since 1991. At the systemic level, it has accelerated three structural shifts: (1) the return of territorial conquest as a state policy instrument, fracturing the sovereignty norm; (2) the de facto emergence of a multipolar security environment, with China, India, and much of the Global South refusing Western sanctions alignment; (3) NATO's rehabilitation as a credible defense institution after a decade of 'brain death' (Macron, 2019). For balance-of-power theory, the war confirms the durability of self-help under anarchy.",
+              he: "המלחמה היא האתגר הישיר ביותר לסדר הבינלאומי הליברלי שלאחר המלחמה הקרה. ברמת המערכת, היא האיצה שלושה שינויים מבניים: שיבה של כיבוש טריטוריאלי; הופעת סביבה רב-קוטבית; ושיקום נאט\"ו כמוסד הגנה אמין.",
+            },
+            citations: [
+              { id:"iken7", label:"7", title:"Ikenberry – The End of Liberal International Order?, IS 2018", href:"https://direct.mit.edu/isec/article/43/1/7/12268/The-End-of-Liberal-International-Order" },
+            ],
+          },
+        },
+        historical: {
+          parallel: { en:"Concert of Europe & The July Crisis of 1914", he:"קונצרט אירופה ומשבר יולי 1914" },
+          similarities: {
+            en: [
+              "Both feature a dissatisfied revisionist great power challenging the existing territorial order by force",
+              "Both involve alliance entanglement risks: Austria-Hungary 1914 ↔ Article 5 NATO commitments 2022+",
+              "Economic interdependence failed to deter war in both cases (pre-WWI globalization; EU-Russia energy ties)",
+              "Both produced rapid escalation dynamics from local conflict to potential great-power confrontation",
+            ],
+            he: [
+              "שתיהן כוללות מעצמה גדולה רוויזיוניסטית המאתגרת את הסדר הטריטוריאלי בכוח",
+              "שתיהן כוללות סיכוני הסתבכות ברית: אוסטריה-הונגריה 1914 ↔ סעיף 5 נאט\"ו 2022+",
+              "תלות כלכלית הדדית נכשלה להרתיע מלחמה בשני המקרים",
+              "שתיהן הניבו דינמיקות הסלמה מהירות",
+            ],
+          },
+          differences: {
+            en: [
+              "The 1914 crisis involved a roughly multipolar system; today the U.S.-Russia asymmetry is massive in the West's favor",
+              "Nuclear deterrence did not exist in 1914 — it is the central constraint on escalation today and has so far prevented direct NATO-Russia war",
+              "The Concert of Europe had no equivalent to NATO's collective defense mechanism",
+              "Information environment is fundamentally different: commercial satellite imagery, social media, and information warfare have no 1914 analogue",
+            ],
+            he: [
+              "משבר 1914 כלל מערכת רב-קוטבית; כיום האסימטריה בין ארה\"ב לרוסיה מסיבית לטובת המערב",
+              "הרתעה גרעינית לא הייתה קיימת ב-1914 — היא האילוץ המרכזי על הסלמה היום",
+              "לקונצרט אירופה לא היה מנגנון הגנה קולקטיבי שוות ערך לנאט\"ו",
+              "סביבת המידע שונה מהותית: לוויינות מסחרית, רשתות חברתיות ולוחמת מידע",
+            ],
+          },
+          keyTakeaway: {
+            en: "The 1914 analogy is valid as a warning about alliance entanglement and the failure of economic interdependence to prevent war — but dangerously misleading if applied to escalation dynamics, where nuclear deterrence creates a fundamentally different ceiling. The most applicable lesson is not 'sleepwalking into WWI' but the Concert of Europe's failure to manage a revisionist power before it resorted to force.",
+            he: "אנלוגיית 1914 תקפה כאזהרה על הסתבכות ברית וכישלון התלות ההדדית — אך מסוכנת אם מיישמים אותה על הסלמה, שם הרתעה גרעינית יוצרת תקרה שונה מהותית.",
+          },
+          citations: [
+            { id:"clark8",  label:"8", title:"Clark – The Sleepwalkers (2012)", href:"https://www.worldcat.org/title/the-sleepwalkers-how-europe-went-to-war-in-1914/oclc/793275655" },
+            { id:"mac9",    label:"9", title:"MacMillan – The War That Ended Peace (2013)", href:"https://www.worldcat.org/title/the-war-that-ended-peace/oclc/820480543" },
+          ],
+        },
+      },
+    ]; // end ISSUES
+
+    // ================================================================
+    // UTILITY COMPONENTS
+    // ================================================================
+
+    function CitationTag({ label, title, href }) {
+      return (
+        <span className="cite-wrap">
+          <a
+            href={href}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ fontSize:"0.65rem", verticalAlign:"super" }}
+            className="font-mono text-blue-400 hover:text-blue-600 ml-0.5"
+          >
+            [{label}]
+          </a>
+          <span className="cite-tip">{title}</span>
+        </span>
+      );
+    }
+
+    function LevelBadge({ level, lang }) {
+      const label = L[lang][level];
+      const cls = {
+        individual: "bg-blue-100 text-blue-700 border-blue-200",
+        state:      "bg-green-100 text-green-700 border-green-200",
+        systemic:   "bg-purple-100 text-purple-700 border-purple-200",
+      }[level];
+      return (
+        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold border ${cls}`}>
+          {label}
+        </span>
+      );
+    }
+
+    function ProgressBar() {
+      const [pct, setPct] = useState(0);
+      useEffect(() => {
+        const onScroll = () => {
+          const el = document.documentElement;
+          setPct(Math.min((el.scrollTop / (el.scrollHeight - el.clientHeight)) * 100, 100));
+        };
+        window.addEventListener("scroll", onScroll, { passive: true });
+        return () => window.removeEventListener("scroll", onScroll);
+      }, []);
+      return <div id="progress-bar" style={{ width: `${pct}%` }} />;
+    }
+
+    // ================================================================
+    // ACCORDION
+    // ================================================================
+
+    function Accordion({ title, subtitle, defaultOpen = false, accent = "blue", children }) {
+      const [open, setOpen] = useState(defaultOpen);
+      const border = { blue:"border-blue-400", green:"border-green-400", purple:"border-purple-400" }[accent];
+      return (
+        <div className={`bg-white rounded-xl border border-gray-200 border-s-4 ${border} mb-4 shadow-sm overflow-hidden`}>
+          <button
+            className="w-full text-start px-6 py-5 flex items-center justify-between gap-4 hover:bg-gray-50 transition-colors"
+            onClick={() => setOpen(o => !o)}
+          >
+            <div>
+              <div className="font-semibold text-gray-900">{title}</div>
+              {!open && <div className="text-sm text-gray-400 mt-0.5">{subtitle}</div>}
+            </div>
+            <span className={`chevron text-gray-400 text-xl flex-shrink-0 ${open ? "open" : ""}`}>▾</span>
+          </button>
+          <div className={`accordion-content ${open ? "open" : ""}`}>
+            <div className="px-6 pb-6 pt-1">{children}</div>
+          </div>
+        </div>
+      );
+    }
+
+    // ================================================================
+    // SECTION: LANDSCAPE
+    // ================================================================
+
+    function LandscapeSection({ data, lang }) {
+      const lbl = L[lang];
+      return (
+        <div>
+          <p className="text-gray-700 mb-6" style={{ maxWidth:"68ch" }}>{data.summary[lang]}</p>
+
+          <h3 className="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-3">{lbl.keyFacts}</h3>
+          <div className="grid gap-3 mb-8">
+            {data.keyFacts.map((f, i) => (
+              <div key={i} className="hoverable bg-gray-50 rounded-lg p-4 border border-gray-100">
+                <p className="text-sm text-gray-700 leading-relaxed">
+                  {f.text[lang]}
+                  {f.citations.map(c => <CitationTag key={c.id} {...c} />)}
+                </p>
+              </div>
+            ))}
+          </div>
+
+          <h3 className="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-3">{lbl.timeline}</h3>
+          <div className="space-y-2">
+            {data.timeline.map((t, i) => (
+              <div key={i} className="flex gap-4 text-sm">
+                <span className="flex-shrink-0 w-16 font-mono text-blue-600 font-semibold">{t.year}</span>
+                <span className="text-gray-600">{t.text[lang]}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+    }
+
+    // ================================================================
+    // SECTION: ANALYSIS
+    // ================================================================
+
+    function AnalysisSection({ data, lang }) {
+      const borderCls = { individual:"border-blue-300", state:"border-green-300", systemic:"border-purple-300" };
+      const bgCls     = { individual:"bg-blue-50",      state:"bg-green-50",      systemic:"bg-purple-50"     };
+      return (
+        <div className="grid gap-4 lg:grid-cols-3">
+          {["individual","state","systemic"].map(lvl => {
+            const entry = data[lvl];
+            return (
+              <div key={lvl} className={`rounded-xl p-5 border-s-4 ${borderCls[lvl]} ${bgCls[lvl]}`}>
+                <div className="mb-3">
+                  <LevelBadge level={lvl} lang={lang} />
+                  <p className="text-xs text-gray-500 mt-1 font-medium">{entry.actor[lang]}</p>
+                </div>
+                <p className="text-sm text-gray-700 leading-relaxed">
+                  {entry.text[lang]}
+                  {entry.citations.map(c => <CitationTag key={c.id} {...c} />)}
+                </p>
+              </div>
+            );
+          })}
+        </div>
+      );
+    }
+
+    // ================================================================
+    // SECTION: HISTORICAL MIRROR
+    // ================================================================
+
+    function HistoricalMirror({ data, lang }) {
+      const lbl = L[lang];
+      return (
+        <div>
+          <p className="text-sm text-gray-500 mb-5">
+            <span className="font-semibold text-gray-700">{lbl.parallel}:</span>{" "}
+            <span className="italic">{data.parallel[lang]}</span>
+          </p>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+            <div>
+              <h4 className="text-xs font-semibold uppercase tracking-wide text-green-700 mb-2">{lbl.similarities}</h4>
+              <ul className="space-y-2">
+                {data.similarities[lang].map((s, i) => (
+                  <li key={i} className="text-sm text-gray-700 flex gap-2">
+                    <span className="text-green-500 flex-shrink-0 mt-1">●</span>
+                    <span>{s}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div>
+              <h4 className="text-xs font-semibold uppercase tracking-wide text-red-600 mb-2">{lbl.differences}</h4>
+              <ul className="space-y-2">
+                {data.differences[lang].map((d, i) => (
+                  <li key={i} className="text-sm text-gray-700 flex gap-2">
+                    <span className="text-red-400 flex-shrink-0 mt-1">●</span>
+                    <span>{d}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+
+          <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
+            <div className="text-xs font-semibold uppercase tracking-wide text-amber-700 mb-2">{lbl.keyTakeaway}</div>
+            <p className="text-sm text-gray-700 leading-relaxed">
+              {data.keyTakeaway[lang]}
+              {data.citations.map(c => <CitationTag key={c.id} {...c} />)}
+            </p>
+          </div>
+        </div>
+      );
+    }
+
+    // ================================================================
+    // LIVE NEWS FEED
+    // ================================================================
+
+    const IR_KW = ["china","russia","nato","ukraine","iran","israel","taiwan","korea","nuclear","sanction","treaty","war","conflict","military","diplomacy","pentagon","kremlin","security council","united nations","geopolit"];
+
+    function isIR(item) {
+      const txt = `${item.title} ${item.description || ""}`.toLowerCase();
+      return IR_KW.some(kw => txt.includes(kw));
+    }
+
+    function ago(ds) {
+      const h = Math.floor((Date.now() - new Date(ds)) / 3600000);
+      return h < 1 ? "< 1h ago" : h < 24 ? `${h}h ago` : `${Math.floor(h/24)}d ago`;
+    }
+
+    function Skeleton() {
+      return (
+        <div className="bg-white rounded-xl p-4 border border-gray-100">
+          <div className="skeleton h-4 w-3/4 mb-2" /><div className="skeleton h-3 w-1/3" />
+        </div>
+      );
+    }
+
+    function LiveNewsFeed({ lang }) {
+      const lbl = L[lang];
+      const [items, setItems]     = useState([]);
+      const [loading, setLoading] = useState(true);
+      const [error,   setError]   = useState(false);
+
+      const FEEDS = [
+        "https://feeds.bbci.co.uk/news/world/rss.xml",
+        "https://rss.nytimes.com/services/xml/rss/nyt/World.xml",
+      ];
+
+      const fetch_ = async () => {
+        setLoading(true); setError(false);
+        for (const feed of FEEDS) {
+          try {
+            const r = await fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(feed)}&count=40`);
+            const d = await r.json();
+            if (d.status === "ok" && d.items?.length) {
+              const filtered = d.items.filter(isIR).slice(0, 6);
+              if (filtered.length) { setItems(filtered); setLoading(false); return; }
+            }
+          } catch {}
+        }
+        setError(true); setLoading(false);
+      };
+
+      useEffect(() => { fetch_(); }, []);
+
+      return (
+        <div className="mt-10 border-t border-gray-200 pt-8">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h2 className="text-lg font-bold text-gray-900">{lbl.liveNews}</h2>
+              <p className="text-sm text-gray-400">{lbl.liveNewsSub}</p>
+            </div>
+            <button
+              onClick={fetch_}
+              className="text-xs text-blue-500 border border-blue-200 rounded-lg px-3 py-1 hover:bg-blue-50 transition-colors"
+            >
+              ↻ {lbl.refresh}
+            </button>
+          </div>
+
+          {loading && (
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {[...Array(6)].map((_,i) => <Skeleton key={i} />)}
+            </div>
+          )}
+
+          {error && (
+            <div className="text-center py-8 text-gray-400">
+              <p className="mb-2">{lbl.noNews}</p>
+              <button onClick={fetch_} className="text-sm text-blue-500 hover:underline">{lbl.retry}</button>
+            </div>
+          )}
+
+          {!loading && !error && (
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {items.map((item, i) => (
+                <a
+                  key={i}
+                  href={item.link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hoverable bg-white rounded-xl p-4 border border-gray-100 block hover:border-blue-200"
+                  style={{ textDecoration:"none" }}
+                >
+                  <p className="text-sm font-medium text-gray-800 mb-2 leading-snug" style={{ display:"-webkit-box", WebkitLineClamp:3, WebkitBoxOrient:"vertical", overflow:"hidden" }}>
+                    {item.title}
+                  </p>
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-gray-400">{ago(item.pubDate)}</span>
+                    <span className="text-xs text-blue-500">{lbl.readMore}</span>
+                  </div>
+                </a>
+              ))}
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    // ================================================================
+    // APP
+    // ================================================================
+
+    function App() {
+      const [lang,      setLang]      = useState("en");
+      const [activeId,  setActive]    = useState(ISSUES[0].id);
+      const [liveIssue, setLiveIssue] = useState(null);
+
+      // Fetch today's auto-generated issue (only works when hosted online)
+      useEffect(() => {
+        fetch("today.json")
+          .then(r => { if (!r.ok) throw new Error("no today.json"); return r.json(); })
+          .then(data => { setLiveIssue(data); setActive(data.id); })
+          .catch(() => {}); // silently skip when running locally
+      }, []);
+
+      useEffect(() => {
+        document.documentElement.lang = lang === "he" ? "he" : "en";
+        document.documentElement.dir  = lang === "he" ? "rtl" : "ltr";
+      }, [lang]);
+
+      const allIssues = liveIssue ? [liveIssue, ...ISSUES] : ISSUES;
+      const issue     = allIssues.find(i => i.id === activeId) || allIssues[0];
+      const lbl       = L[lang];
+
+      return (
+        <div className="min-h-screen" style={{ background:"#F8F7F4" }}>
+          <ProgressBar />
+
+          {/* ── Sticky header ────────────────────────────────────── */}
+          <header className="sticky top-0 z-50 bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between shadow-sm">
+            <div className="flex items-center gap-2">
+              <span className="font-bold text-gray-900 text-sm tracking-tight">{lbl.appName}</span>
+              <span className="hidden sm:inline text-xs text-gray-400 border-s border-gray-200 ps-2">{lbl.appSub}</span>
+            </div>
+            <button
+              onClick={() => setLang(l => l === "en" ? "he" : "en")}
+              className="px-3 py-1 rounded-lg border border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors"
+            >
+              {lang === "en" ? "עב" : "EN"}
+            </button>
+          </header>
+
+          {/* ── Main ─────────────────────────────────────────────── */}
+          <main className="max-w-3xl mx-auto px-4 py-8">
+
+            {/* Issue switcher */}
+            <div className="flex gap-2 p-1 bg-gray-100 rounded-xl mb-6 overflow-x-auto">
+              {allIssues.map(iss => (
+                <button
+                  key={iss.id}
+                  onClick={() => setActive(iss.id)}
+                  className={`issue-tab flex-shrink-0 text-start px-4 py-2 rounded-lg text-sm font-medium ${
+                    activeId === iss.id ? "active text-gray-900" : "text-gray-500 hover:text-gray-700"
+                  }`}
+                >
+                  <span className="text-xs text-gray-400 flex items-center gap-1">
+                    {lbl.issueLabel} {iss.meta.number}
+                    {iss.meta.number === "LIVE" && (
+                      <span className="inline-block px-1 py-0.5 rounded text-xs font-bold bg-red-100 text-red-600 leading-none">●</span>
+                    )}
+                  </span>
+                  <span>{iss.meta.title[lang]}</span>
+                </button>
+              ))}
+            </div>
+
+            {/* Issue header */}
+            <div className="mb-8">
+              <div className="text-7xl font-black text-gray-100 leading-none mb-1" aria-hidden="true">
+                {issue.meta.number}
+              </div>
+              <h1 className="text-2xl font-bold text-gray-900 leading-tight mb-1">{issue.meta.title[lang]}</h1>
+              <p className="text-gray-500 mb-3">{issue.meta.subtitle[lang]}</p>
+              <div className="flex flex-wrap gap-2 mb-2">
+                {issue.meta.tags[lang].map(t => (
+                  <span key={t} className="px-3 py-0.5 bg-gray-100 text-gray-600 rounded-full text-xs font-medium">{t}</span>
+                ))}
+              </div>
+              <p className="text-xs text-gray-400">{lbl.lastUpdated}: {issue.meta.lastUpdated}</p>
+              <div className="border-t border-gray-200 mt-4" />
+            </div>
+
+            {/* Sections */}
+            <Accordion title={lbl.landscape} subtitle={lbl.landscapeSub} defaultOpen={true}  accent="blue">
+              <LandscapeSection data={issue.landscape} lang={lang} />
+            </Accordion>
+
+            <Accordion title={lbl.analysis}  subtitle={lbl.analysisSub}  defaultOpen={false} accent="green">
+              <AnalysisSection data={issue.analysis} lang={lang} />
+            </Accordion>
+
+            <Accordion title={lbl.historical} subtitle={lbl.historicalSub} defaultOpen={false} accent="purple">
+              <HistoricalMirror data={issue.historical} lang={lang} />
+            </Accordion>
+
+            {/* Live news */}
+            <LiveNewsFeed lang={lang} />
+
+            {/* Footer */}
+            <footer className="mt-12 pt-6 border-t border-gray-200 text-xs text-gray-400 text-center space-y-1">
+              <p className="font-medium text-gray-500">{lbl.hostTitle}</p>
+              <p className="max-w-sm mx-auto">{lbl.hostBody}</p>
+              <p className="mt-4 text-gray-300">{lbl.footer} · {new Date().getFullYear()}</p>
+            </footer>
+          </main>
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+  </script>
+</body>
+</html>
