@@ -1,0 +1,156 @@
+{
+  "id": "auto-20260313",
+  "meta": {
+    "number": "LIVE",
+    "title": {
+      "en": "US-Iran Naval Confrontation",
+      "he": "העימות הימי בין ארה\"ב לאיראן"
+    },
+    "subtitle": {
+      "en": "Bodies of 84 Iranian sailors to be repatriated",
+      "he": "גופות 84 מלחים איראנים יוחזרו למולדת"
+    },
+    "tags": {
+      "en": [
+        "US-Iran Relations",
+        "Naval Confrontation",
+        "International Security"
+      ],
+      "he": [
+        "יחסי ארה\"ב-איראן",
+        "עימות ימי",
+        "ביטחון בינלאומי"
+      ]
+    },
+    "lastUpdated": "March 2026"
+  },
+  "landscape": {
+    "summary": {
+      "en": "The bodies of 84 Iranian sailors killed in a US torpedo strike are to be repatriated. The incident occurred on March 4, when the Iranian warship Iris Dena was sunk by a US submarine near Sri Lanka. The incident has raised tensions between the US and Iran, with both countries exchanging accusations and warnings.",
+      "he": "גופות 84 מלחים איראנים שנהרגו בתקיפת טורפדו אמריקאית יוחזרו למולדת. האירוע התרחש ב-4 במרץ, כאשר האונייה האיראנית איריס דנה טובעה על ידי צוללת אמריקאית ליד סרי לנקה. האירוע העלה את המתיחות בין ארה\"ב לאיראן, כאשר שתי המדינות מחליפות האשמות ואזהרות."
+    },
+    "keyFacts": [
+      {
+        "text": {
+          "en": "The Iranian warship Iris Dena was sunk by a US submarine on March 4",
+          "he": "האונייה האיראנית איריס דנה טובעה על ידי צוללת אמריקאית ב-4 במרץ"
+        },
+        "citations": [
+          {
+            "id": "src1",
+            "label": "1",
+            "title": "BBC World",
+            "href": "https://www.bbc.com/news/articles/c363lk4xk07o?at_medium=RSS&at_campaign=rss"
+          }
+        ]
+      },
+      {
+        "text": {
+          "en": "84 Iranian sailors were killed in the incident",
+          "he": "84 מלחים איראנים נהרגו באירוע"
+        },
+        "citations": []
+      },
+      {
+        "text": {
+          "en": "The incident occurred near Sri Lanka",
+          "he": "האירוע התרחש ליד סרי לנקה"
+        },
+        "citations": []
+      }
+    ],
+    "timeline": [
+      {
+        "year": "2026",
+        "text": {
+          "en": "US submarine sinks Iranian warship Iris Dena",
+          "he": "צוללת אמריקאית טובעת את האונייה האיראנית איריס דנה"
+        }
+      },
+      {
+        "year": "2026",
+        "text": {
+          "en": "Bodies of 84 Iranian sailors to be repatriated",
+          "he": "גופות 84 מלחים איראנים יוחזרו למולדת"
+        }
+      },
+      {
+        "year": "2026",
+        "text": {
+          "en": "US and Iran exchange accusations and warnings",
+          "he": "ארה\"ב ואיראן מחליפות האשמות ואזהרות"
+        }
+      }
+    ]
+  },
+  "analysis": {
+    "individual": {
+      "actor": {
+        "en": "US President and Iranian Supreme Leader",
+        "he": "נשיא ארה\"ב והמנהיג העליון של איראן"
+      },
+      "text": {
+        "en": "The decision-making process of the US President and the Iranian Supreme Leader will be crucial in determining the escalation or de-escalation of the conflict. The psychology of the leaders, including their risk tolerance and strategic thinking, will play a significant role in shaping the outcome.",
+        "he": "תהליך קבלת ההחלטות של נשיא ארה\"ב והמנהיג העליון של איראן יהיה מכריע בקביעת ההסלמה או ההרגעה של הסכסוך. פסיכולוגיית המנהיגים, כולל סבילות הסיכון וחשיבה אסטרטגית, תמלא תפקיד משמעותי בעיצוב התוצאה."
+      },
+      "citations": []
+    },
+    "state": {
+      "actor": {
+        "en": "United States and Iran",
+        "he": "ארה\"ב ואיראן"
+      },
+      "text": {
+        "en": "The domestic politics and national interests of the US and Iran will influence their actions and decisions. The US will likely consider the incident in the context of its broader Middle East strategy, while Iran will prioritize its national security and regional influence.",
+        "he": "הפוליטיקה הפנימית והאינטרסים הלאומיים של ארה\"ב ואיראן ישפיעו על פעולותיהם והחלטותיהם. ארה\"ב כנראה תשקל את האירוע בהקשר של אסטרטגיית המזרח התיכון הרחבה, בעוד איראן תעדיף את ביטחונה הלאומי והשפעתה האזורית."
+      },
+      "citations": []
+    },
+    "systemic": {
+      "actor": {
+        "en": "International System",
+        "he": "המערכת הבינלאומית"
+      },
+      "text": {
+        "en": "The incident can be analyzed through the lens of neorealism, which emphasizes the role of power and security in international relations. The US and Iran are engaged in a security dilemma, where the actions of one state are perceived as a threat by the other, leading to an arms race and increased tensions.",
+        "he": "האירוע יכול להינתח באמצעות עדשת הניאוריאליזם, המדגיש את תפקיד הכוח והביטחון ביחסים בינלאומיים. ארה\"ב ואיראן נמצאות במצב של דילמת ביטחון, שבו פעולות מדינה אחת נתפסות כאיום על ידי המדינה האחרת, מה שמוביל למרוץ חימוש והגברת המתיחות."
+      },
+      "citations": []
+    }
+  },
+  "historical": {
+    "parallel": {
+      "en": "The Gulf of Tonkin incident (1964)",
+      "he": "תקרית מפרץ טונקין (1964)"
+    },
+    "similarities": {
+      "en": [
+        "Naval confrontation",
+        "Escalation of tensions",
+        "International implications"
+      ],
+      "he": [
+        "עימות ימי",
+        "הסלמה של מתיחות",
+        "משמעויות בינלאומיות"
+      ]
+    },
+    "differences": {
+      "en": [
+        "Cold War context",
+        "US and Iran's current relationship",
+        "Global geopolitical landscape"
+      ],
+      "he": [
+        "הקשר של המלחמה הקרה",
+        "יחסי ארה\"ב ואיראן הנוכחיים",
+        "נוף גאופוליטי גלובלי"
+      ]
+    },
+    "keyTakeaway": {
+      "en": "The Gulf of Tonkin incident highlights the importance of careful decision-making and communication in international relations to avoid escalation and unintended consequences.",
+      "he": "תקרית מפרץ טונקין מדגישה את חשיבות קבלת החלטות זהירה ותקשורת ביחסים בינלאומיים כדי למנוע הסלמה ותוצאות בלתי מכוונות."
+    },
+    "citations": []
+  }
+}
