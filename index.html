@@ -761,8 +761,8 @@
         document.documentElement.dir  = lang === "he" ? "rtl" : "ltr";
       }, [lang]);
 
-      const allIssues = liveIssue ? [liveIssue, ...ISSUES] : ISSUES;
-      const issue     = allIssues.find(i => i.id === activeId) || allIssues[0];
+      const allIssues = liveIssue ? [liveIssue] : [];
+      const issue     = allIssues[0] ?? null;
       const lbl       = L[lang];
 
       return (
@@ -786,55 +786,49 @@
           {/* ── Main ─────────────────────────────────────────────── */}
           <main className="max-w-3xl mx-auto px-4 py-8">
 
-            {/* Issue switcher */}
-            <div className="flex gap-2 p-1 bg-gray-100 rounded-xl mb-6 overflow-x-auto">
-              {allIssues.map(iss => (
-                <button
-                  key={iss.id}
-                  onClick={() => setActive(iss.id)}
-                  className={`issue-tab flex-shrink-0 text-start px-4 py-2 rounded-lg text-sm font-medium ${
-                    activeId === iss.id ? "active text-gray-900" : "text-gray-500 hover:text-gray-700"
-                  }`}
-                >
-                  <span className="text-xs text-gray-400 flex items-center gap-1">
-                    {lbl.issueLabel} {iss.meta.number}
-                    {iss.meta.number === "LIVE" && (
-                      <span className="inline-block px-1 py-0.5 rounded text-xs font-bold bg-red-100 text-red-600 leading-none">●</span>
-                    )}
-                  </span>
-                  <span>{iss.meta.title[lang]}</span>
-                </button>
-              ))}
-            </div>
+            {/* Issue content — only shown when today.json loaded */}
+            {issue ? (
+              <>
+                {/* Issue header */}
+                <div className="mb-8">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="inline-block px-2 py-0.5 rounded text-xs font-bold bg-red-100 text-red-600">● LIVE</span>
+                    <span className="text-xs text-gray-400">{issue.meta.lastUpdated}</span>
+                  </div>
+                  <h1 className="text-2xl font-bold text-gray-900 leading-tight mb-1">{issue.meta.title[lang]}</h1>
+                  <p className="text-gray-500 mb-3">{issue.meta.subtitle[lang]}</p>
+                  <div className="flex flex-wrap gap-2 mb-2">
+                    {issue.meta.tags[lang].map(t => (
+                      <span key={t} className="px-3 py-0.5 bg-gray-100 text-gray-600 rounded-full text-xs font-medium">{t}</span>
+                    ))}
+                  </div>
+                  <div className="border-t border-gray-200 mt-4" />
+                </div>
 
-            {/* Issue header */}
-            <div className="mb-8">
-              <div className="text-7xl font-black text-gray-100 leading-none mb-1" aria-hidden="true">
-                {issue.meta.number}
+                {/* Sections */}
+                <Accordion title={lbl.landscape} subtitle={lbl.landscapeSub} defaultOpen={true}  accent="blue">
+                  <LandscapeSection data={issue.landscape} lang={lang} />
+                </Accordion>
+
+                <Accordion title={lbl.analysis}  subtitle={lbl.analysisSub}  defaultOpen={false} accent="green">
+                  <AnalysisSection data={issue.analysis} lang={lang} />
+                </Accordion>
+
+                <Accordion title={lbl.historical} subtitle={lbl.historicalSub} defaultOpen={false} accent="purple">
+                  <HistoricalMirror data={issue.historical} lang={lang} />
+                </Accordion>
+              </>
+            ) : (
+              <div className="text-center py-24">
+                <div className="text-5xl mb-4">📡</div>
+                <p className="text-lg font-medium text-gray-600">
+                  {lang === "he" ? "הגיליון היומי יהיה זמין בקרוב" : "Today's issue will be available soon"}
+                </p>
+                <p className="text-sm text-gray-400 mt-2">
+                  {lang === "he" ? "הסקריפט היומי עוד לא רץ" : "The daily script hasn't run yet"}
+                </p>
               </div>
-              <h1 className="text-2xl font-bold text-gray-900 leading-tight mb-1">{issue.meta.title[lang]}</h1>
-              <p className="text-gray-500 mb-3">{issue.meta.subtitle[lang]}</p>
-              <div className="flex flex-wrap gap-2 mb-2">
-                {issue.meta.tags[lang].map(t => (
-                  <span key={t} className="px-3 py-0.5 bg-gray-100 text-gray-600 rounded-full text-xs font-medium">{t}</span>
-                ))}
-              </div>
-              <p className="text-xs text-gray-400">{lbl.lastUpdated}: {issue.meta.lastUpdated}</p>
-              <div className="border-t border-gray-200 mt-4" />
-            </div>
-
-            {/* Sections */}
-            <Accordion title={lbl.landscape} subtitle={lbl.landscapeSub} defaultOpen={true}  accent="blue">
-              <LandscapeSection data={issue.landscape} lang={lang} />
-            </Accordion>
-
-            <Accordion title={lbl.analysis}  subtitle={lbl.analysisSub}  defaultOpen={false} accent="green">
-              <AnalysisSection data={issue.analysis} lang={lang} />
-            </Accordion>
-
-            <Accordion title={lbl.historical} subtitle={lbl.historicalSub} defaultOpen={false} accent="purple">
-              <HistoricalMirror data={issue.historical} lang={lang} />
-            </Accordion>
+            )}
 
             {/* Live news */}
             <LiveNewsFeed lang={lang} />
